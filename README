@@ -1,0 +1,46 @@
+Proyecto VegnuX 2007-2012 <http://vegnux.org.ve/index.html>
+Scripts to build linux-libre Kernel for GNU NeonatoX
+Carlos Sanchez <cargabsj175@vegnux.org.ve>
+
+Contents:
+=========
+-------------------------
+
+linux-libre-3.5-gnu.tar.xz  (this download automatically  later that ./build-3.x.x runs)
+build-3.5
+config-i686
+config-x86_64
+COPYING
+README
+squashfs4.2.tar.gz
+
+aufs3.xrcN20120618:
+Documentation
+fs
+include
+
+patches:
+100gnu+freedo.patch
+aufs3.5-20120618-base.patch
+aufs3.5-20120618-kbuild.patch
+aufs3.5-20120618-loopback.patch
+aufs3.5-20120618.patch
+aufs3.5-20120618-proc_map.patch
+aufs3.5-20120618-standalone.patch
+bootsplash-3.1.6a-3.5.diff
+channel-negative-one-maxim.patch
+defaults-fat-utf8.patch
+
+-------------------------
+
+Resources:
+==========
+
+linux-2.6.36.1-libre:
+http://www.fsfla.org/svnwiki/selibre/linux-libre/
+
+Aufs3:
+http://aufs.git.sourceforge.net/git/gitweb.cgi?p=aufs/aufs3-standalone.git;a=summary
+
+Bootsplash patch:
+http://manualinux.my-place.us/config/bootsplash.html
