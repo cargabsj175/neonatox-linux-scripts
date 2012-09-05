@@ -36,7 +36,7 @@ defaults-fat-utf8.patch
 Resources:
 ==========
 
-linux-2.6.36.1-libre:
+linux-libre-3.5-gnu:
 http://www.fsfla.org/svnwiki/selibre/linux-libre/
 
 Aufs3:
