@@ -1,0 +1,237 @@
+#!/bin/bash
+# This script build a optimized kernel for GNU NeonatoX
+# based on PKGBUILD original by Christos Nouskas <nous at archlinux dot us>
+# Carlos Sánchez <cargabsj175@vegnux.org.ve>
+# Proyecto VegnuX - copyleft 2007-2012
+# GPLv3
+
+#variables
+kver=3.5
+kname=linux
+kfullname=${kname}-libre
+k=gnu
+knum=
+krel=${k}${knum}
+nrel=n07x_${k}
+bdir=/usr/src
+kbdir=${bdir}/${kname}-${kver}
+curdir=$(pwd)
+arch=$(uname -m)
+urlibre=http://www.linux-libre.fsfla.org/pub/linux-libre/releases
+squashfs=${bdir}/squashfs4.2
+# kernel binaries destination
+outputdir=${curdir}/${kname}-${kver}-$(uname -m)-${nrel}.bin
+# pre-compiled kernel sources destination
+pcsrc=${curdir}/${kname}-${kver}-$(uname -m)-${nrel}.pcsrc # pendiente
+dblbar="========================="
+
+#functions
+function title()
+{
+	# Get message text.
+	MESSAGE="${1}"
+	echo -n "${MESSAGE}"
+	# Success.
+	return 0
+}
+function checkroot()
+{
+	if [[ "${UID}" != "0" ]]; then
+		echo "To run this script you need have root powers."
+		exit 1
+	fi
+	return 0
+}
+
+# Main
+clear
+title "Building ${kfullname}-${kver} for GNU Neonatox"
+echo ""
+echo ""
+checkroot
+
+
+# Unpacking, moving and preparing files
+title "Preparing the stuff ..."
+#cp -r ${curdir}/*.diff ${bdir}
+cp -r ${curdir}/patches/* ${bdir}
+cp -r ${curdir}/conf* ${bdir}
+echo " [OK]"
+echo ""
+echo "Unpacking: "
+
+title ">> ${kfullname} Kernel..."
+if [ -d  ${bdir}/${kname}-${kver} ]; then
+		echo -n ""
+		
+	else
+		if [ -f ${curdir}/${kfullname}-${kver}-${k}.tar.xz ]; then
+			tar -xf ${curdir}/${kfullname}-${kver}-${k}.tar.* -C ${bdir}
+			cd ${kbdir}
+			make mrproper
+			cd ${curdir}
+		else
+			echo "${kname}-${kver}-${k} is not here, Downloading ..."
+			wget -cqt 3 -T 20 ${urlibre}/${kver}-${k}/${kfullname}-${kver}-${k}.tar.xz
+			tar -xf ${curdir}/${kfullname}-${kver}-${k}.tar.* -C ${bdir}
+			cd ${kbdir}
+			make mrproper
+			cd ${curdir}
+		fi
+		
+fi
+if [ $(uname -m) == x86_64 ]; then
+cp -r ${bdir}/config-x86_64 ${kbdir}/.config
+else
+cp -r ${bdir}/config-i686 ${kbdir}/.config
+fi
+echo " [OK]"
+
+title ">> squashfs-tools ..."
+	if [ -d  ${squashfs} ]; then
+		echo -n ""
+		else
+	tar -xf squashfs4.2.tar.gz -C ${bdir}
+		fi
+echo " [OK]"
+
+# Entering to kernel sources directory <<<< :P
+cd ${kbdir}
+echo ""
+echo "Applying Patches: "
+title ">> Aufs2 support ..."
+	function patches()
+	{
+		#aufs3 patches
+		patch -Np1 -i ${bdir}/aufs3.5-20120618.patch
+		patch -Np1 -i ${bdir}/aufs3.5-20120618-base.patch
+		patch -Np1 -i ${bdir}/aufs3.5-20120618-kbuild.patch
+		patch -Np1 -i ${bdir}/aufs3.5-20120618-loopback.patch
+		patch -Np1 -i ${bdir}/aufs3.5-20120618-proc_map.patch
+		patch -Np1 -i ${bdir}/aufs3.5-20120618-standalone.patch
+	}
+	echo $dblbar >> ${curdir}/build.log
+	echo ">> Aufs2 support ..." >> ${curdir}/build.log
+	echo $dblbar >> ${curdir}/build.log
+	patches >> ${curdir}/build.log
+echo " [OK]"
+
+title ">> Bootsplash support ..." 
+	function bootspl()
+	{
+		#bootsplash patches
+		patch -Np1 -i ${bdir}/bootsplash-3.1.6a-3.5.diff
+	}
+	echo $dblbar >> ${curdir}/build.log
+	echo ">> Bootsplash support ..."  >> ${curdir}/build.log
+	echo $dblbar >> ${curdir}/build.log
+	bootspl >> ${curdir}/build.log
+echo " [OK]"
+
+title ">> GNU+Freedo Boot logo ..."
+	function bootlogo()
+	{
+		#bootlogo patches
+		patch -Np1 -i ${bdir}/100gnu+freedo.patch
+	}
+	echo $dblbar >> ${curdir}/build.log
+	echo ">> GNU+Freedo Boot logo ..." >> ${curdir}/build.log
+	echo $dblbar >> ${curdir}/build.log
+	bootlogo >> ${curdir}/build.log
+echo " [OK]"
+
+title ">> Bug fixes ..."
+	function bugfixes()
+	{
+		#fixes patches
+		patch -Np1 -i ${bdir}/defaults-fat-utf8.patch
+		patch -Np1 -i ${bdir}/channel-negative-one-maxim.patch		
+	}
+	echo $dblbar >> ${curdir}/build.log
+	echo ">> Bug fixes ..." >> ${curdir}/build.log
+	echo $dblbar >> ${curdir}/build.log
+	bugfixes >> ${curdir}/build.log
+echo " [OK]"
+
+echo ""
+title "Configuring: "
+echo ""
+echo "You might be prompted below for some config options"
+echo ""
+echo "Hit <Y> to use your running kernel's config"
+echo "    (needs IKCONFIG and IKCONFIG_PROC, run 'modprobe configs'"
+echo "    as root before hitting <Y>, if uncertain)"
+echo "Hit <L> to run make localmodconfig"
+echo "Hit <N> (or just <ENTER>) to build an all-inclusive kernel like stock -${nrel}"
+echo "    (warning: it can take a looong time)"
+read answer
+
+shopt -s nocasematch
+if [[ "$answer" = "y" ]]; then
+    if [[ -s /proc/config.gz ]]; then
+       echo "Extracting config from /proc/config.gz..."
+       modprobe configs
+       zcat /proc/config.gz > ${kbdir}/.config
+    else
+echo "You kernel was not compiled with IKCONFIG_PROC."
+echo "Running make localmodconfig instead."
+	   chmod +x ${kbdir}/scripts/kconfig/streamline_config.pl
+	   .${kbdir}/scripts/kconfig/streamline_config.pl > ${kbdir}/config_strip
+	   mv ${kbdir}/config_strip ${kbdir}/.config
+    fi
+    elif [[ "$answer" = "l" ]]; then
+    # Copied from kernel26-ck's PKGBUILD
+       echo "Running the functional equivalent of make localmodconfig now."
+       chmod +x ${kbdir}/scripts/kconfig/streamline_config.pl
+       .${kbdir}/scripts/kconfig/streamline_config.pl > ${kbdir}/config_strip
+       mv ${kbdir}/config_strip ${kbdir}/.config
+       echo "An error about ksource in line 118 blah blah is NORMAL as is one about nvidia config too!"
+   else
+       echo "Using stock NeonatoX kernel .config (with  Aufs2 enabled)."
+   fi
+
+# Building the kernel
+# NeonatoXing (you can comment this)
+# if the kernel have a extra version (2.6.37)
+# you may prefix a ".X-" before ${krel} or ${k} -->  the result would be .6-${krel} or .6-${k} & .6-${nrel}
+sed -i "s/EXTRAVERSION =-gnu/EXTRAVERSION =-${nrel}/g" ${kbdir}/Makefile
+# Start
+# make prepare
+echo ""
+echo "Run make menuconfig before build? (y/N)"
+   read answer
+   if [[ "$answer" = "y" ]]; then
+      make menuconfig && cp -v ${kbdir}/.config ${kbdir}/config.local
+   fi
+# Strip config of uneeded localversion
+   if [ "NeonatoX" != "" ]; then
+      sed -i "s|CONFIG_LOCALVERSION=.*|CONFIG_LOCALVERSION=\"\"|g" ${kbdir}/.config
+   fi
+make -j2 bzImage
+make -j2 modules
+# Installing --> at output directory
+mkdir -p ${outputdir}/{lib/modules,boot}
+make INSTALL_MOD_PATH=${outputdir} modules_install
+cp ${kbdir}/System.map ${outputdir}/boot/System.map-${kver}-$(uname -m)-${nrel}
+if [ $(uname -m) == x86_64 ]; then
+cp ${kbdir}/arch/x86_64/boot/bzImage ${outputdir}/boot/vmlinuz-${kver}-$(uname -m)-${nrel}
+else
+cp ${kbdir}/arch/x86/boot/bzImage ${outputdir}/boot/vmlinuz-${kver}-$(uname -m)-${nrel}
+fi
+cp ${kbdir}/.config ${outputdir}/boot/config-${kver}-$(uname -m)-${nrel}
+
+# Entering to squashfs-tools sources directory <<<< :P
+cd ${squashfs}/squashfs-tools
+echo ">> Compiling squashfs-tools ..."
+mkdir -p ${outputdir}/usr/bin
+# enable all compressors and set Destdir
+  sed -i 's/#\(XZ_SUPPORT = 1\)/\1/; s/#\(LZO_SUPPORT = 1\)/\1/; s/#\(LZMA_XZ_SUPPORT = 1\)/\1/; s:^\(INSTALL_DIR = \).*:\1\$(DESTDIR)/usr/bin:' Makefile
+# set "xz" as default compressor instead "gzip".
+  sed -i 's/COMP_DEFAULT = gzip/COMP_DEFAULT = xz/g' Makefile
+  make -j2 
+  cp -r {mk,un}squashfs ${outputdir}/usr/bin
+
+title "Your kernel has been compiled successfully here -> "
+echo "${outputdir}" 
+
+
