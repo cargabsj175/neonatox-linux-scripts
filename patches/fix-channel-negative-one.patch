@@ -1,0 +1,16 @@
+diff -r 6b71629b673d net/wireless/chan.c
+--- a/net/wireless/chan.c	Tue May 28 16:57:23 2013 -0400
++++ b/net/wireless/chan.c	Tue May 28 17:16:15 2013 -0400
+@@ -480,8 +480,10 @@ int cfg80211_set_monitor_channel(struct 
+ {
+ 	if (!rdev-&gt;ops-&gt;set_monitor_channel)
+ 		return -EOPNOTSUPP;
+-	if (!cfg80211_has_monitors_only(rdev))
+-		return -EBUSY;
++	// Always allow user to change channel, even if there is another normal
++	// virtual interface using the device.
++	//if (!cfg80211_has_monitors_only(rdev))
++	//	return -EBUSY;
+ 
+ 	return rdev_set_monitor_channel(rdev, chandef);
+ 
