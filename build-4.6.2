@@ -6,19 +6,19 @@
 # GPLv3
 
 #variables
-kver=3.5
+kver=4.6.2
 kname=linux
 kfullname=${kname}-libre
 k=gnu
 knum=
 krel=${k}${knum}
-nrel=n07x_${k}
+nrel=n2017x_${k}
 bdir=/usr/src
 kbdir=${bdir}/${kname}-${kver}
 curdir=$(pwd)
 arch=$(uname -m)
 urlibre=http://www.linux-libre.fsfla.org/pub/linux-libre/releases
-squashfs=${bdir}/squashfs4.2
+squashfs=${bdir}/squashfs4.3
 # kernel binaries destination
 outputdir=${curdir}/${kname}-${kver}-$(uname -m)-${nrel}.bin
 # pre-compiled kernel sources destination
@@ -91,7 +91,7 @@ title ">> squashfs-tools ..."
 	if [ -d  ${squashfs} ]; then
 		echo -n ""
 		else
-	tar -xf squashfs4.2.tar.gz -C ${bdir}
+	tar -xf squashfs4.3.tar.gz -C ${bdir}
 		fi
 echo " [OK]"
 
@@ -99,33 +99,24 @@ echo " [OK]"
 cd ${kbdir}
 echo ""
 echo "Applying Patches: "
-title ">> Aufs2 support ..."
+title ">> Aufs4 support ..."
 	function patches()
 	{
-		#aufs3 patches
-		patch -Np1 -i ${bdir}/aufs3.5-20120618.patch
-		patch -Np1 -i ${bdir}/aufs3.5-20120618-base.patch
-		patch -Np1 -i ${bdir}/aufs3.5-20120618-kbuild.patch
-		patch -Np1 -i ${bdir}/aufs3.5-20120618-loopback.patch
-		patch -Np1 -i ${bdir}/aufs3.5-20120618-proc_map.patch
-		patch -Np1 -i ${bdir}/aufs3.5-20120618-standalone.patch
+		#aufs4 patches
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-base.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-kbuild.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-lockdep-debug.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-loopback.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-mmap.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-standalone.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-tmpfs-idr.patch
+		patch -Np1 -i ${bdir}/aufs4.6.2-20160627-vfs-ino.patch
 	}
-	echo $dblbar >> ${curdir}/build.log
-	echo ">> Aufs2 support ..." >> ${curdir}/build.log
-	echo $dblbar >> ${curdir}/build.log
-	patches >> ${curdir}/build.log
-echo " [OK]"
-
-title ">> Bootsplash support ..." 
-	function bootspl()
-	{
-		#bootsplash patches
-		patch -Np1 -i ${bdir}/bootsplash-3.1.6a-3.5.diff
-	}
-	echo $dblbar >> ${curdir}/build.log
-	echo ">> Bootsplash support ..."  >> ${curdir}/build.log
-	echo $dblbar >> ${curdir}/build.log
-	bootspl >> ${curdir}/build.log
+	echo $dblbar >> ${curdir}/build-$(date +%Y%m%d).log
+	echo ">> Aufs4 support ..." >> ${curdir}/build-$(date +%Y%m%d).log
+	echo $dblbar >> ${curdir}/build-$(date +%Y%m%d).log
+	patches >> ${curdir}/build-$(date +%Y%m%d).log
 echo " [OK]"
 
 title ">> GNU+Freedo Boot logo ..."
@@ -134,23 +125,23 @@ title ">> GNU+Freedo Boot logo ..."
 		#bootlogo patches
 		patch -Np1 -i ${bdir}/100gnu+freedo.patch
 	}
-	echo $dblbar >> ${curdir}/build.log
-	echo ">> GNU+Freedo Boot logo ..." >> ${curdir}/build.log
-	echo $dblbar >> ${curdir}/build.log
-	bootlogo >> ${curdir}/build.log
+	echo $dblbar >> ${curdir}/build-$(date +%Y%m%d).log
+	echo ">> GNU+Freedo Boot logo ..." >> ${curdir}/build-$(date +%Y%m%d).log
+	echo $dblbar >> ${curdir}/build-$(date +%Y%m%d).log
+	bootlogo >> ${curdir}/build-$(date +%Y%m%d).log
 echo " [OK]"
 
 title ">> Bug fixes ..."
 	function bugfixes()
 	{
 		#fixes patches
-		patch -Np1 -i ${bdir}/defaults-fat-utf8.patch
-		patch -Np1 -i ${bdir}/channel-negative-one-maxim.patch		
+		patch -Np1 -i ${bdir}/0001-linux-4.6-rtlwifi-fix-atomic.patch
+		patch -Np1 -i ${bdir}/fix-channel-negative-one.patch
 	}
-	echo $dblbar >> ${curdir}/build.log
-	echo ">> Bug fixes ..." >> ${curdir}/build.log
-	echo $dblbar >> ${curdir}/build.log
-	bugfixes >> ${curdir}/build.log
+	echo $dblbar >> ${curdir}/build-$(date +%Y%m%d).log
+	echo ">> Bug fixes ..." >> ${curdir}/build-$(date +%Y%m%d).log
+	echo $dblbar >> ${curdir}/build-$(date +%Y%m%d).log
+	bugfixes >> ${curdir}/build-$(date +%Y%m%d).log
 echo " [OK]"
 
 echo ""
@@ -194,7 +185,7 @@ echo "Running make localmodconfig instead."
 # NeonatoXing (you can comment this)
 # if the kernel have a extra version (2.6.37)
 # you may prefix a ".X-" before ${krel} or ${k} -->  the result would be .6-${krel} or .6-${k} & .6-${nrel}
-sed -i "s/EXTRAVERSION =-gnu/EXTRAVERSION =-${nrel}/g" ${kbdir}/Makefile
+sed -i "s/EXTRAVERSION = -gnu/EXTRAVERSION =-${nrel}/g" ${kbdir}/Makefile
 # Start
 # make prepare
 echo ""
